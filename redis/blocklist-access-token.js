@@ -1,4 +1,7 @@
-const blocklist = require('./blocklist');
+const redis = require('redis');
+const blocklist = redis.createClient({ prefix: 'blocklist-access-token:'});
+const manipulaLista = require('./manipula-lista');
+const manipulaBlocklist = manipulaLista(blocklist);
 
 const { promisify } = require('util');
 const existAsync = promisify(blocklist.exists).bind(blocklist);
@@ -8,23 +11,19 @@ const jwt = require('jsonwebtoken');
 const { createHash } = require('crypto');
 
 function geraTokenHash(token) {
-    return createHash('sha256')
-        .update(token)
-        .digest('hex');
+    return createHash('sha256').update(token).digest('hex');
 }
 
 module.exports = {
-    adiciona: async token => {
+    async adiciona(token) {
         // forma para adicionar o token pelo redis
         const dataExpiracao = jwt.decode(token).exp;
         const tokenHash = geraTokenHash(token);
-        await setAsync(tokenHash, '');
-        blocklist.expireat(tokenHash, dataExpiracao);
+        await manipulaBlocklist.adiciona(tokenHash, '', dataExpiracao);
     },
-    contemToken: async token => {
+    async contemToken (token) {
         // forma para validar o token no redis
         const tokenHash = geraTokenHash(token);
-        const resultado = await existAsync(tokenHash);
-        return resultado == 1;
+        return manipulaBlocklist.contemChave(tokenHash);
     }
 }
