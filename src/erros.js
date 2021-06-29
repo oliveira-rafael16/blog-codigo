@@ -12,7 +12,4 @@ class InvalidArgumentError extends Error {
     }
   }
   
-  module.exports = {
-    InvalidArgumentError: InvalidArgumentError,
-    InternalServerError: InternalServerError
-  };
+  module.exports = { InvalidArgumentError, InternalServerError };
